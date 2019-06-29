@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
 )
+find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -200,3 +201,4 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 add_executable(rrtstar src/main.cpp src/RRTStar.cpp)
+target_link_libraries(rrtstar ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} yaml-cpp)
