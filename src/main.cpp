@@ -24,6 +24,7 @@ int main()
 	// temp.addobstacle(obstacle1);
 	// temp.addobstacle(obstacle2);
 	// // std::cout << "obstacle: " << temp.Obstacleset[0].topleftx << " " << temp.Obstacleset[0].toplefty << std::endl;
+	
 
 	// temp.findPath(start, goal);
 	return 0;

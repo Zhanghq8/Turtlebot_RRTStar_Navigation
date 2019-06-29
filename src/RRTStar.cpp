@@ -86,7 +86,7 @@ void RRT::RRTStar::getmap(std::string file)
 	std::cout << "Topleft: " << topleft.x << " " << topleft.y << std::endl;
 	std::cout << "Bottomright: " << bottomright.x << " " << bottomright.y << std::endl;
 
-	Vec2i pixelbottomleft = {topleft.x, bottomright.y};
+	Vec2i pixelbottomleft = {topleft.x+ 2*2, bottomright.y- 2*2};
 	// set mapbottomleft
 	mapbottomleft = pixel2pos(pixelbottomleft, rows, cols);
 	std::cout << "map bottomleft: " << mapbottomleft.x << " " << mapbottomleft.y << std::endl;
@@ -137,11 +137,26 @@ void RRT::RRTStar::getmap(std::string file)
 	for (int i = 0; i< contours_sub.size(); i++)
 	{
 		// std::cout << "contous " << i << " " << cv::contourArea(contours_sub[i]) << std::endl;
+		Rectobstacle rect_obstacle;
 		cv::Scalar color = cv::Scalar( 255, 0, 0 );
 		cv::Rect r = cv::boundingRect(cv::Mat(contours_sub[i]));
-		std::cout << r.tl().x << " " << r.tl().y << " " << r.br().x << " " << r.br().y << std::endl; 
+		std::cout << r.tl().x << " " << r.tl().y << " " << r.br().x << " " << r.br().y << std::endl;
+		rect_obstacle.width = (r.br().x - r.tl().x + 1) * resolution;
+		rect_obstacle.height = (r.br().y - r.tl().y + 1) * resolution;
+		// Vec2i obstaclebl
+		rect_obstacle.bottomleftx = pixel2pos({r.tl().x, r.br().y}, rows, cols).x;
+		rect_obstacle.bottomlefty = pixel2pos({r.tl().x, r.br().y}, rows, cols).y;
+		addobstacle(rect_obstacle); 
 		cv::rectangle(drawing, r, cv::Scalar(255), 1);
 	}
+	std::cout << "obstacle size: " << Obstacleset.size() << std::endl;
+	// 	struct Rectobstacle
+	// {
+	// 	float width;
+	// 	float height;
+	// 	float bottomleftx;
+	// 	float bottomlefty; // coordinate of topleft point
+	// };
 
 	cv::imshow("image", drawing);
 	cv::waitKey();
@@ -154,8 +169,8 @@ void RRT::RRTStar::getmap(std::string file)
 RRT::Vec2i RRT::RRTStar::pixel2pos(Vec2i pixel_, int rows_, int cols_)
 {
 	Vec2i pos;
-	pos.x = pgmbottomleft.x + (rows_ - pixel_.x + 1) * resolution;
-	pos.y = pgmbottomleft.y + (cols_ - pixel_.y + 1) * resolution;
+	pos.x = pgmbottomleft.x + (pixel_.x + 1) * resolution;
+	pos.y = pgmbottomleft.y + (rows_ - pixel_.y + 1) * resolution;
 	return pos;
 }
 
@@ -168,7 +183,7 @@ void RRT::RRTStar::readmapparameter(std::string file)
 	origin = lconf["origin"].as<std::vector<float>>();
 	pgmbottomleft.x = origin[0];
 	pgmbottomleft.y = origin[1];
-	// std::cout << "origin: " << pgmleftbottom.x<< " " << pgmleftbottom.y << std::endl;
+	std::cout << "origin: " << pgmbottomleft.x<< " " << pgmbottomleft.y << std::endl;
 }
 
 void RRT::RRTStar::setinflationradius(int inflation_radius_)
