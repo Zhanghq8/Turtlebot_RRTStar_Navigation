@@ -6,7 +6,8 @@
 int main()
 {
 	RRT::RRTStar temp;
-	temp.getmap("aaa");
+	temp.readmapparameter();
+	temp.getmap();
 	// temp.setstepsize(3.0);
 	// temp.setnearradius(3.5);
 	// temp.setgoalbias(0.07);

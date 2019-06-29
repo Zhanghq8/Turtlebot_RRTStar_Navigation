@@ -10,9 +10,170 @@ RRT::Vertex::Vertex(Vec2i coordinates_, Vertex *parent_, float cost_)
 
 void RRT::RRTStar::getmap(std::string file)
 {	
+	int rows =0, cols =0;
+	std::ifstream infile(file, std::ios::binary);
+	std::stringstream ss;	
+	std::string inputLine ="";
+	// https://cboard.cprogramming.com/cplusplus-programming/168760-reading-pgm-file-using-visual-cplusplus.html
+	getline(infile,inputLine);// read the first line : P5
+	// if(inputLine.compare("P5")!=0) std::cout <<"Version error"<< std::endl;
+	// std::cout <<"Version : "<< inputLine << std::endl;
 
-	// map_width 
-	// map_height 
+	getline(infile,inputLine);// read the second line : comment
+	// std::cout <<"Comment : "<< inputLine << std::endl;
+
+	ss << infile.rdbuf();//read the third line : width and height
+	ss >> cols >> rows;
+	std::cout << cols <<" columns and "<< rows <<" rows"<< std::endl;
+
+	int max_val;//maximum intensity value : 255
+	ss >> max_val;
+	// std::cout<<max_val;
+	unsigned char pixel;
+	unsigned int pixel_value[rows][cols];
+	cv::Mat img(rows, cols, CV_8UC1, cv::Scalar(70));
+
+	for(int i=0; i < rows; i++)
+	{//record the pixel values
+		for(int j=0; j < cols; j++){
+			ss >> pixel;
+			int temp = int(pixel);
+			if (temp > 230) 
+			{
+				img.at<uchar> (i,j) = 255;
+			}
+			else
+			{
+				img.at<uchar> (i,j) = 0;
+			}
+			pixel_value[i][j]= pixel;
+		}
+	}
+
+	infile.close(); 
+
+	cv::Mat img_temp = img.clone();
+	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
+	cv::morphologyEx(img_temp, img_temp, cv::MORPH_OPEN, element);
+	cv::morphologyEx(img_temp, img_temp, cv::MORPH_CLOSE, element);
+
+	int thresh = 30;
+	cv::Mat canny_output;
+	std::vector<std::vector<cv::Point> > contours;
+	std::vector<cv::Vec4i> hierarchy;
+	cv::Canny(img_temp, canny_output, thresh, thresh * 3, 3);
+	cv::findContours(canny_output, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+	int area = 0;
+	int index = -1;
+	for (int i = 0; i< contours.size(); i++)
+	{
+		if (cv::contourArea(contours[i]) > area)
+		{	
+			// std::cout << "contous " << i << " " << cv::contourArea(contours[i]) << std::endl;
+			area = cv::contourArea(contours[i]);
+			index = i;
+		}
+	}
+	cv::Rect r = cv::boundingRect(cv::Mat(contours[index]));
+
+	// Set map size
+	Vec2i topleft;
+	Vec2i bottomright;
+	topleft.x = r.tl().x;
+	topleft.y = r.tl().y;
+	bottomright.x = r.br().x;
+	bottomright.y = r.br().y;
+	std::cout << "Topleft: " << topleft.x << " " << topleft.y << std::endl;
+	std::cout << "Bottomright: " << bottomright.x << " " << bottomright.y << std::endl;
+
+	Vec2i pixelbottomleft = {topleft.x, bottomright.y};
+	// set mapbottomleft
+	mapbottomleft = pixel2pos(pixelbottomleft, rows, cols);
+	std::cout << "map bottomleft: " << mapbottomleft.x << " " << mapbottomleft.y << std::endl;
+
+
+	Vec2i width_range;
+	Vec2i height_range;
+	width_range.x = topleft.x + 2*2;
+	width_range.y = bottomright.x - 2*2;
+
+	height_range.x = topleft.y + 2*2;
+	height_range.y = bottomright.y - 2*2;
+
+	// set map size
+	map_width = (width_range.y - width_range.x + 1) * resolution;
+	map_height = (height_range.y - height_range.x + 1) * resolution;
+	std::cout << "map size: " << map_width << " " << map_height << std::endl;
+
+	cv::Rect roi = cv::Rect(width_range.x, height_range.x, width_range.y - width_range.x, height_range.y - height_range.x);
+
+	cv::Mat roiImg;
+	roiImg = img(roi).clone();
+
+	cv::Mat element_sub = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+	cv::morphologyEx(roiImg, roiImg, cv::MORPH_OPEN, element_sub);
+	// cv::morphologyEx(roiImg, roiImg, cv::MORPH_CLOSE, element_sub);
+	// std::ofstream file_path;
+	// file_path.open("path.txt",std::ios::trunc);
+
+	// for (int i=height_range.x; i<height_range.y; i++)
+	// {
+	// 	for (int j=width_range.x; j<width_range.y; j++)
+	// 	{	
+	// 		file_path << std::to_string(img_new.at<uchar> (i,j)) << " ";
+	// 		// img_new.at<uchar> (i,j) = img.at<uchar> (i,j);
+	// 	}
+	// 	file_path << "; " << std::endl;
+	// }
+	// file_path << "\n";
+	// file_path.close();
+	int thresh_sub = 30;
+	cv::Mat canny_output_sub;
+	std::vector<std::vector<cv::Point> > contours_sub;
+	std::vector<cv::Vec4i> hierarchy_sub;
+	cv::Canny(roiImg, canny_output_sub, thresh_sub, thresh_sub * 5, 5);
+	cv::findContours(canny_output_sub, contours_sub, hierarchy_sub, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+	cv::Mat drawing = cv::Mat::zeros( canny_output_sub.size(), CV_8UC3 );
+	for (int i = 0; i< contours_sub.size(); i++)
+	{
+		// std::cout << "contous " << i << " " << cv::contourArea(contours_sub[i]) << std::endl;
+		cv::Scalar color = cv::Scalar( 255, 0, 0 );
+		cv::Rect r = cv::boundingRect(cv::Mat(contours_sub[i]));
+		std::cout << r.tl().x << " " << r.tl().y << " " << r.br().x << " " << r.br().y << std::endl; 
+		cv::rectangle(drawing, r, cv::Scalar(255), 1);
+	}
+
+	cv::imshow("image", drawing);
+	cv::waitKey();
+
+
+	 
+
+}
+
+RRT::Vec2i RRT::RRTStar::pixel2pos(Vec2i pixel_, int rows_, int cols_)
+{
+	Vec2i pos;
+	pos.x = pgmbottomleft.x + (rows_ - pixel_.x + 1) * resolution;
+	pos.y = pgmbottomleft.y + (cols_ - pixel_.y + 1) * resolution;
+	return pos;
+}
+
+void RRT::RRTStar::readmapparameter(std::string file)
+{
+	YAML::Node lconf = YAML::LoadFile(file);
+	resolution = lconf["resolution"].as<float>();
+	// std::cout << "resolution  " << resolution << std::endl;
+	std::vector<float> origin;
+	origin = lconf["origin"].as<std::vector<float>>();
+	pgmbottomleft.x = origin[0];
+	pgmbottomleft.y = origin[1];
+	// std::cout << "origin: " << pgmleftbottom.x<< " " << pgmleftbottom.y << std::endl;
+}
+
+void RRT::RRTStar::setinflationradius(int inflation_radius_)
+{
+	inflation_radius = inflation_radius_;
 }
 
 void RRT::RRTStar::setgoalbias(float goal_bias_)
@@ -65,10 +226,10 @@ bool RRT::RRTStar::isHit(Vec2i coordinates1_, Vec2i coordinates2_)
 		Vec2i topleft = {Obstacleset[i].bottomleftx, Obstacleset[i].bottomlefty + Obstacleset[i].height};
 		Vec2i topright = {Obstacleset[i].bottomleftx + Obstacleset[i].width, Obstacleset[i].bottomlefty + Obstacleset[i].height};
 		// std::cout << "point" << bottomleft.x << " " << bottomleft.y << " " << topleft.x << " " << topleft.y << std::endl;
-		bool top = islineinsect(coordinates1_, coordinates2_, topleft, topright);
-		bool bottom = islineinsect(coordinates1_, coordinates2_, bottomleft, bottomright);
-		bool left = islineinsect(coordinates1_, coordinates2_, topleft, bottomleft);
-		bool right = islineinsect(coordinates1_, coordinates2_, topright, bottomright);
+		bool top = islineintersect(coordinates1_, coordinates2_, topleft, topright);
+		bool bottom = islineintersect(coordinates1_, coordinates2_, bottomleft, bottomright);
+		bool left = islineintersect(coordinates1_, coordinates2_, topleft, bottomleft);
+		bool right = islineintersect(coordinates1_, coordinates2_, topright, bottomright);
 		// std::cout << "line" << top << bottom << left << right << std::endl;
 		if (top || bottom || left || right)
 		{
@@ -79,7 +240,7 @@ bool RRT::RRTStar::isHit(Vec2i coordinates1_, Vec2i coordinates2_)
 }
 
 
-bool RRT::RRTStar::islineinsect(Vec2i line1p1_, Vec2i line1p2_, Vec2i line2p1_, Vec2i line2p2_)
+bool RRT::RRTStar::islineintersect(Vec2i line1p1_, Vec2i line1p2_, Vec2i line2p1_, Vec2i line2p2_)
 {
 	// calculate the distance to intersection point
 	float uA = ((line2p2_.x-line2p1_.x)*(line1p1_.y-line2p1_.y) - (line2p2_.y-line2p1_.y)*
