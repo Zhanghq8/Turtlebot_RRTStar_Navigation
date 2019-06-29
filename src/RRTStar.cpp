@@ -311,8 +311,8 @@ RRT::Vec2i RRT::RRTStar::GenerateRandomPoint(Vec2i goal_)
 	Vec2i randompoint;
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_real_distribution<> x(0, map_width);
-	std::uniform_real_distribution<> y(0, map_height);
+	std::uniform_real_distribution<> x(mapbottomleft.x, mapbottomleft.x + map_width);
+	std::uniform_real_distribution<> y(mapbottomleft.y, mapbottomleft.y + map_height);
 
 	randompoint.x = x(gen);
 	randompoint.y = y(gen);
