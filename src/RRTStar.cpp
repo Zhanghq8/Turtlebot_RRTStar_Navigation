@@ -24,7 +24,7 @@ void RRT::RRTStar::getmap(std::string file)
 
 	ss << infile.rdbuf();//read the third line : width and height
 	ss >> cols >> rows;
-	std::cout << cols <<" columns and "<< rows <<" rows"<< std::endl;
+	// std::cout << cols <<" columns and "<< rows <<" rows"<< std::endl;
 
 	int max_val;//maximum intensity value : 255
 	ss >> max_val;
@@ -83,14 +83,13 @@ void RRT::RRTStar::getmap(std::string file)
 	topleft.y = r.tl().y;
 	bottomright.x = r.br().x;
 	bottomright.y = r.br().y;
-	std::cout << "Topleft: " << topleft.x << " " << topleft.y << std::endl;
-	std::cout << "Bottomright: " << bottomright.x << " " << bottomright.y << std::endl;
+	// std::cout << "Topleft: " << topleft.x << " " << topleft.y << std::endl;
+	// std::cout << "Bottomright: " << bottomright.x << " " << bottomright.y << std::endl;
 
 	Vec2i pixelbottomleft = {topleft.x+ 2*2, bottomright.y- 2*2};
 	// set mapbottomleft
 	mapbottomleft = pixel2pos(pixelbottomleft, rows, cols);
-	std::cout << "map bottomleft: " << mapbottomleft.x << " " << mapbottomleft.y << std::endl;
-
+	std::cout << "Map bottomleft: " << mapbottomleft.x << " " << mapbottomleft.y << std::endl;
 
 	Vec2i width_range;
 	Vec2i height_range;
@@ -103,7 +102,7 @@ void RRT::RRTStar::getmap(std::string file)
 	// set map size
 	map_width = (width_range.y - width_range.x + 1) * resolution;
 	map_height = (height_range.y - height_range.x + 1) * resolution;
-	std::cout << "map size: " << map_width << " " << map_height << std::endl;
+	std::cout << "Map size: " << map_width << " * " << map_height << std::endl;
 
 	cv::Rect roi = cv::Rect(width_range.x, height_range.x, width_range.y - width_range.x, height_range.y - height_range.x);
 
@@ -112,28 +111,15 @@ void RRT::RRTStar::getmap(std::string file)
 
 	cv::Mat element_sub = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
 	cv::morphologyEx(roiImg, roiImg, cv::MORPH_OPEN, element_sub);
-	// cv::morphologyEx(roiImg, roiImg, cv::MORPH_CLOSE, element_sub);
-	// std::ofstream file_path;
-	// file_path.open("path.txt",std::ios::trunc);
 
-	// for (int i=height_range.x; i<height_range.y; i++)
-	// {
-	// 	for (int j=width_range.x; j<width_range.y; j++)
-	// 	{	
-	// 		file_path << std::to_string(img_new.at<uchar> (i,j)) << " ";
-	// 		// img_new.at<uchar> (i,j) = img.at<uchar> (i,j);
-	// 	}
-	// 	file_path << "; " << std::endl;
-	// }
-	// file_path << "\n";
-	// file_path.close();
+	// get obstacle
 	int thresh_sub = 30;
 	cv::Mat canny_output_sub;
 	std::vector<std::vector<cv::Point> > contours_sub;
 	std::vector<cv::Vec4i> hierarchy_sub;
 	cv::Canny(roiImg, canny_output_sub, thresh_sub, thresh_sub * 5, 5);
 	cv::findContours(canny_output_sub, contours_sub, hierarchy_sub, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-	cv::Mat drawing = cv::Mat::zeros( canny_output_sub.size(), CV_8UC3 );
+	// cv::Mat drawing = cv::Mat::zeros( canny_output_sub.size(), CV_8UC3 );
 	for (int i = 0; i< contours_sub.size(); i++)
 	{
 		// std::cout << "contous " << i << " " << cv::contourArea(contours_sub[i]) << std::endl;
@@ -144,25 +130,17 @@ void RRT::RRTStar::getmap(std::string file)
 		rect_obstacle.width = (r.br().x - r.tl().x + 1) * resolution;
 		rect_obstacle.height = (r.br().y - r.tl().y + 1) * resolution;
 		// Vec2i obstaclebl
-		rect_obstacle.bottomleftx = pixel2pos({r.tl().x, r.br().y}, rows, cols).x;
-		rect_obstacle.bottomlefty = pixel2pos({r.tl().x, r.br().y}, rows, cols).y;
+		rect_obstacle.bottomleftx = pixel2pos({width_range.x + r.tl().x, height_range.x + r.br().y}, rows, cols).x;
+		rect_obstacle.bottomlefty = pixel2pos({width_range.x + r.tl().x, height_range.x + r.br().y}, rows, cols).y;
 		addobstacle(rect_obstacle); 
-		cv::rectangle(drawing, r, cv::Scalar(255), 1);
+		// std::cout << "obstacle: " << i << "width " << Obstacleset[i].width << "height " << Obstacleset[i].height 
+		// << "(" << Obstacleset[i].bottomleftx << "," << Obstacleset[i].bottomlefty << ")" << std::endl;
+		// cv::rectangle(drawing, r, cv::Scalar(255), 1);
 	}
-	std::cout << "obstacle size: " << Obstacleset.size() << std::endl;
-	// 	struct Rectobstacle
-	// {
-	// 	float width;
-	// 	float height;
-	// 	float bottomleftx;
-	// 	float bottomlefty; // coordinate of topleft point
-	// };
+	// std::cout << "obstacle size: " << Obstacleset.size() << std::endl;
 
-	cv::imshow("image", drawing);
-	cv::waitKey();
-
-
-	 
+	// cv::imshow("image", drawing);
+	// cv::waitKey();	 
 
 }
 
