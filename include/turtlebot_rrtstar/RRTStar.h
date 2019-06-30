@@ -68,13 +68,13 @@ namespace RRT
 		void getmap(std::string file = "/home/han/catkin_ws/src/turtlebot_rrtstar/maps/simple_map.pgm");
 
 		Vec2i pixel2pos(Vec2i pixel_, int rows_, int cols_);
-		void setstepsize(float step_size_=resolution*5);
+		void setstepsize(float step_size_=0.05*5);
 		// Set the stepsize to connect from current point to randompoint
 		void setinflationradius(int inflation_radius_ = 3);
 		// Set the probability to generate goal point instead of a random point
 		void setgoalbias(float goal_bias_=7);
 		// Set the near radius when rewiring
-		void setnearradius(float near_radius_=resolution*5);
+		void setnearradius(float near_radius_=0.05*6);
 		// Add rectangular obstacle
 		void addobstacle(Rectobstacle obstacle_);
 		// Set the maximum iterations for RRT algorithm
@@ -82,7 +82,7 @@ namespace RRT
 		// Set the bias to check if it is close to goal point
 		void setgoalradius(float goal_radius_);
 		// Set the stepsize to generate random point 
-		void setrandompointsize(float randompoint_size_);
+		void setrandompointsize(float randompoint_size_=0.05*20);
 		void minsmoothpath(Vec2i goal_);
 		void randomsmoothpath();
 		void exportpath();

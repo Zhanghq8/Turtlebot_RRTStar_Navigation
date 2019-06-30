@@ -126,7 +126,7 @@ void RRT::RRTStar::getmap(std::string file)
 		Rectobstacle rect_obstacle;
 		cv::Scalar color = cv::Scalar( 255, 0, 0 );
 		cv::Rect r = cv::boundingRect(cv::Mat(contours_sub[i]));
-		std::cout << r.tl().x << " " << r.tl().y << " " << r.br().x << " " << r.br().y << std::endl;
+		// std::cout << r.tl().x << " " << r.tl().y << " " << r.br().x << " " << r.br().y << std::endl;
 		rect_obstacle.width = (r.br().x - r.tl().x + 1) * resolution;
 		rect_obstacle.height = (r.br().y - r.tl().y + 1) * resolution;
 		// Vec2i obstaclebl
@@ -286,10 +286,10 @@ bool RRT::RRTStar::isGoal(Vec2i source_, Vec2i goal_)
 
 bool RRT::RRTStar::isValid(Vec2i coordinates_, Vec2i closestvertex_) 
 {
-	if (coordinates_.x > 0 && coordinates_.y > 0 
-		&& coordinates_.x < map_width && coordinates_.y < map_height
-		&& closestvertex_.x > 0 && closestvertex_.y > 0 
-		&& closestvertex_.x < map_width && closestvertex_.y < map_height 
+	if (coordinates_.x > mapbottomleft.x && coordinates_.y > mapbottomleft.y 
+		&& coordinates_.x < mapbottomleft.x + map_width && coordinates_.y < mapbottomleft.y + map_height
+		&& closestvertex_.x > mapbottomleft.x && closestvertex_.y > mapbottomleft.y 
+		&& closestvertex_.x < mapbottomleft.x + map_width && closestvertex_.y < mapbottomleft.y + map_height 
 		&& isInObstacle(coordinates_) == false && isInObstacle(closestvertex_) == false
 		&& isHit(coordinates_, closestvertex_) == false)
 	{
@@ -348,12 +348,13 @@ bool RRT::RRTStar::extend(Vertex* closestvertex_, Vec2i randompoint_)
 	Vec2i vertextemp;
 	vertextemp.x = closestvertex_->coordinates.x + step_size * cos(theta);
 	vertextemp.y = closestvertex_->coordinates.y + step_size * sin(theta);
+	// std::cout << "vertextemp: " << vertextemp.x << " " << vertextemp.y << std::endl;
+	// std::cout << "closestvertex_: " << closestvertex_->coordinates.x << " " << closestvertex_->coordinates.y << std::endl;
 	// std::cout << "isvalid " << isValid(vertextemp, closestvertex_->coordinates) << std::endl;
 	if (isValid(vertextemp, closestvertex_->coordinates) == true) 
 	{	
 		Vertex* newparent_ = rewire(VertexSet, vertextemp);
-		// std::cout << "isvalid " << isValid(vertextemp, newparent_->coordinates) << std::endl;
-
+		// std::cout << " newparent_" << newparent_ << std::endl;
 		if (isValid(vertextemp, newparent_->coordinates) == true)
 		{
 			Vertex* newvertex = new Vertex(vertextemp, newparent_, newparent_->cost + step_size);
@@ -406,8 +407,9 @@ void RRT::RRTStar::findPath(Vec2i source_, Vec2i goal_)
 		Vertex* closestv= getClosestVertex(VertexSet, randompoint);
 		// std::cout << "Closestv: " << closestv << std::endl;
 		if (extend(closestv, randompoint) == true)
-		{
+		{	
 			current_iterations++;
+			// std::cout << "isgoal: " << isGoal(current->coordinates, goal_) << std::endl;
 			if (isGoal(current->coordinates, goal_) == true)
 			{
 				done_flag = true;
@@ -509,7 +511,7 @@ void RRT::RRTStar::randomsmoothpath()
 	{
 		return;
 	}
-	int iteration = smooth_path.size() * 1.5;
+	int iteration = 5;
 
 	for (int i=0; i<iteration; i++)
 	{	
@@ -522,9 +524,13 @@ void RRT::RRTStar::randomsmoothpath()
 		auto index2 = y(gen);
 		// std::cout << "index " << index1 << " " << index2 << std::endl;
 		if (isValid(smooth_path[index1], smooth_path[index2]))
-		{
-			smooth_path.erase(smooth_path.begin() + std::min(index1, index2) + 1,
-			 smooth_path.begin() + std::max(index1, index2));
+		{	
+			if (abs(index1 - index2) > 1)
+			{
+				smooth_path.erase(smooth_path.begin() + std::min(index1, index2) + 1,
+				 smooth_path.begin() + std::max(index1, index2));				
+			}
+
 		}
 	}
 }
@@ -542,7 +548,7 @@ void RRT::RRTStar::releaseVertices(std::set<Vertex*>& Vertices_)
 void RRT::RRTStar::exportpath()
 {
 	std::ofstream file_path;
-	file_path.open("../path.txt",std::ios::trunc);
+	file_path.open("/home/han/catkin_ws/src/turtlebot_rrtstar/path.txt",std::ios::trunc);
 	for (int i=0; i<path.size(); i++)
 	{
 		file_path << path[i].x << " "; 
@@ -556,7 +562,7 @@ void RRT::RRTStar::exportpath()
 	file_path.close();
 
 	std::ofstream file_smoothpath;
-	file_smoothpath.open("../smoothpath.txt",std::ios::trunc);
+	file_smoothpath.open("/home/han/catkin_ws/src/turtlebot_rrtstar/smoothpath.txt",std::ios::trunc);
 	for (int i=0; i<smooth_path.size(); i++)
 	{
 		file_smoothpath << smooth_path[i].x << " "; 
