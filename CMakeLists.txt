@@ -200,5 +200,5 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-add_executable(rrtstar src/main.cpp src/RRTStar.cpp)
+add_executable(rrtstar src/navigate.cpp src/RRTStar.cpp src/controller.cpp)
 target_link_libraries(rrtstar ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} yaml-cpp)
