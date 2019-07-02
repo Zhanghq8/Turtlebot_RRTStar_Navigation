@@ -71,7 +71,7 @@ namespace RRT
 		Vec2i pixel2pos(Vec2i pixel_, int rows_, int cols_);
 		void setstepsize(float step_size_=0.05*10);
 		// Set the stepsize to connect from current point to randompoint
-		void setinflationradius(int inflation_radius_ = 3);
+		void setinflationradius(int inflation_radius_ = 2);
 		// Set the probability to generate goal point instead of a random point
 		void setgoalbias(float goal_bias_=7);
 		// Set the near radius when rewiring

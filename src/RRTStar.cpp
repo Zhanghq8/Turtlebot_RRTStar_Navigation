@@ -11,10 +11,10 @@ RRT::RRTStar::RRTStar()
 	setgoalradius(0.10);
 	setmaxiterations(10000);
 	RRT::Vec2i start, goal;
-	start.x = 0;
-	start.y = 0;
-	goal.x = -3.0;
-	goal.y = 1;
+	start.x = 0.0;
+	start.y = 0.0;
+	goal.x = 3.0;
+	goal.y = -2.0;
 	findPath(start, goal);
 }
 
@@ -110,7 +110,7 @@ void RRT::RRTStar::getmap(std::string file)
 
 	Vec2i width_range;
 	Vec2i height_range;
-	width_range.x = topleft.x + 2*2;
+	width_range.x = topleft.x + 2*2; // include obstacle inflation
 	width_range.y = bottomright.x - 2*2;
 
 	height_range.x = topleft.y + 2*2;
