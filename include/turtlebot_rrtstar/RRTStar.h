@@ -57,24 +57,25 @@ namespace RRT
 		float goal_bias; //with goal_bias% probability to generate goal point 
 		float goal_radius; 
 		Vertex* current; // keep track of current vertex
-		std::vector<Vec2i> path; // store the coordinate of the path
-		std::vector<Vec2i> smooth_path; // store the coordinate of the path after smoothed
+
 		std::vector<Rectobstacle> Obstacleset; 
 		std::set<Vertex*> VertexSet; // store all the vertice visited
 		
-
 	public:
+		RRTStar();
+		std::vector<Vec2i> path; // store the coordinate of the path
+		std::vector<Vec2i> smooth_path; // store the coordinate of the path after smoothed
 		void readmapparameter(std::string file = "/home/han/catkin_ws/src/turtlebot_rrtstar/maps/simple_map.yaml");
 		void getmap(std::string file = "/home/han/catkin_ws/src/turtlebot_rrtstar/maps/simple_map.pgm");
 
 		Vec2i pixel2pos(Vec2i pixel_, int rows_, int cols_);
-		void setstepsize(float step_size_=0.05*5);
+		void setstepsize(float step_size_=0.05*10);
 		// Set the stepsize to connect from current point to randompoint
 		void setinflationradius(int inflation_radius_ = 3);
 		// Set the probability to generate goal point instead of a random point
 		void setgoalbias(float goal_bias_=7);
 		// Set the near radius when rewiring
-		void setnearradius(float near_radius_=0.05*6);
+		void setnearradius(float near_radius_=0.05*11);
 		// Add rectangular obstacle
 		void addobstacle(Rectobstacle obstacle_);
 		// Set the maximum iterations for RRT algorithm
@@ -91,7 +92,7 @@ namespace RRT
 		// Check if two lines have intersecttion 
 		bool islineintersect(Vec2i line1p1, Vec2i line1p2, Vec2i line2p1, Vec2i line2p2);
 		// Check if the point is within the obstacle
-		bool isInObstacle(const Vec2i& coordinates_);
+		bool isInObstacle(Vec2i& coordinates_);
 		bool isGoal(Vec2i source_, Vec2i goal_); // check if the coordinate is at goal pos
 		bool isValid(Vec2i coordinates_, Vec2i closestvertex_); // check if the coordinate is valid
 		float euclidean_dis(Vec2i source_, Vec2i goal_); // calculate the euclidean distance from current to goal

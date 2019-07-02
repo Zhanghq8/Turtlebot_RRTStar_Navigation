@@ -1,5 +1,22 @@
 #include "../include/turtlebot_rrtstar/RRTStar.h"
 
+RRT::RRTStar::RRTStar()
+{
+	readmapparameter();
+	getmap();
+	setstepsize();
+	setnearradius();
+	setgoalbias(0.07);
+	setrandompointsize();
+	setgoalradius(0.10);
+	setmaxiterations(10000);
+	RRT::Vec2i start, goal;
+	start.x = 0;
+	start.y = 0;
+	goal.x = -3.0;
+	goal.y = 1;
+	findPath(start, goal);
+}
 
 RRT::Vertex::Vertex(Vec2i coordinates_, Vertex *parent_, float cost_)
 {
@@ -89,7 +106,7 @@ void RRT::RRTStar::getmap(std::string file)
 	Vec2i pixelbottomleft = {topleft.x+ 2*2, bottomright.y- 2*2};
 	// set mapbottomleft
 	mapbottomleft = pixel2pos(pixelbottomleft, rows, cols);
-	std::cout << "Map bottomleft: " << mapbottomleft.x << " " << mapbottomleft.y << std::endl;
+	// std::cout << "Map bottomleft: " << mapbottomleft.x << " " << mapbottomleft.y << std::endl;
 
 	Vec2i width_range;
 	Vec2i height_range;
@@ -102,7 +119,7 @@ void RRT::RRTStar::getmap(std::string file)
 	// set map size
 	map_width = (width_range.y - width_range.x + 1) * resolution;
 	map_height = (height_range.y - height_range.x + 1) * resolution;
-	std::cout << "Map size: " << map_width << " * " << map_height << std::endl;
+	// std::cout << "Map size: " << map_width << " * " << map_height << std::endl;
 
 	cv::Rect roi = cv::Rect(width_range.x, height_range.x, width_range.y - width_range.x, height_range.y - height_range.x);
 
@@ -127,11 +144,11 @@ void RRT::RRTStar::getmap(std::string file)
 		cv::Scalar color = cv::Scalar( 255, 0, 0 );
 		cv::Rect r = cv::boundingRect(cv::Mat(contours_sub[i]));
 		// std::cout << r.tl().x << " " << r.tl().y << " " << r.br().x << " " << r.br().y << std::endl;
-		rect_obstacle.width = (r.br().x - r.tl().x + 1) * resolution;
-		rect_obstacle.height = (r.br().y - r.tl().y + 1) * resolution;
+		rect_obstacle.width = (r.br().x - r.tl().x + 1 + 2*4) * resolution;
+		rect_obstacle.height = (r.br().y - r.tl().y + 1 + 2*4) * resolution;
 		// Vec2i obstaclebl
-		rect_obstacle.bottomleftx = pixel2pos({width_range.x + r.tl().x, height_range.x + r.br().y}, rows, cols).x;
-		rect_obstacle.bottomlefty = pixel2pos({width_range.x + r.tl().x, height_range.x + r.br().y}, rows, cols).y;
+		rect_obstacle.bottomleftx = pixel2pos({width_range.x + r.tl().x - 2*2, height_range.x + r.br().y + 2*2}, rows, cols).x;
+		rect_obstacle.bottomlefty = pixel2pos({width_range.x + r.tl().x - 2*2, height_range.x + r.br().y + 2*2}, rows, cols).y;
 		addobstacle(rect_obstacle); 
 		// std::cout << "obstacle: " << i << "width " << Obstacleset[i].width << "height " << Obstacleset[i].height 
 		// << "(" << Obstacleset[i].bottomleftx << "," << Obstacleset[i].bottomlefty << ")" << std::endl;
@@ -252,7 +269,7 @@ bool RRT::RRTStar::islineintersect(Vec2i line1p1_, Vec2i line1p2_, Vec2i line2p1
 }
 
 // check if the coordinate is in all the rectangular obstacles
-bool RRT::RRTStar::isInObstacle(const Vec2i& coordinates_)
+bool RRT::RRTStar::isInObstacle(Vec2i& coordinates_)
 {
 	if (Obstacleset.size() == 0)
 	{
@@ -511,7 +528,7 @@ void RRT::RRTStar::randomsmoothpath()
 	{
 		return;
 	}
-	int iteration = 5;
+	int iteration = 3;
 
 	for (int i=0; i<iteration; i++)
 	{	
@@ -530,7 +547,6 @@ void RRT::RRTStar::randomsmoothpath()
 				smooth_path.erase(smooth_path.begin() + std::min(index1, index2) + 1,
 				 smooth_path.begin() + std::max(index1, index2));				
 			}
-
 		}
 	}
 }
